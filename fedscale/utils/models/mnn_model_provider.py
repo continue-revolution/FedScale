@@ -7,16 +7,16 @@ import numpy as np
 import torch
 from torch import Tensor
 
-cache_path = "../../cloud/aggregation/cache/"
-script_path = "../../../scripts/"
+cache_path = "cache/"
+script_path = "../scripts/"
 
 
 def build_simple_linear(args):
-    return torch.nn.Sequential([
+    return torch.nn.Sequential(
         torch.nn.Flatten(),
         torch.nn.Linear(np.prod(args.input_shape), args.num_classes),
         torch.nn.Softmax(dim=1)
-    ])
+    )
 
 
 _models = {
@@ -69,7 +69,7 @@ def init_keymap(model_weights: dict) -> dict:
         f"{script_path}MNNDump2Json",
         f"{cache_path}model.mnn",
         f"{cache_path}model.json"])
-    with open('../../cloud/aggregation/cache/model.json') as f:
+    with open(f'{cache_path}model.json') as f:
         mnn_json = json.load(f)
     keymap = {}
     torch_keys = set()
@@ -114,7 +114,7 @@ def torch_to_mnn(model, input_shape: Tensor):
         JSON object: MNN model in JSON format.
     """
     # PyTorch -> ONNX
-    input_data = torch.randn(input_shape)
+    input_data = torch.randn([1, *input_shape])
     input_names = ["input"]
     output_names = ["output"]
     Path(cache_path).mkdir(exist_ok=True)
