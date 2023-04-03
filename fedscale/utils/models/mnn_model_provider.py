@@ -22,27 +22,22 @@ def build_simple_linear(args):
     
 
 def build_resnet34(args):
-    model = torch.hub.load('pytorch/vision:v0.9.0', 'resnet34', pretrained=False)
+    from torchvision.models.resnet import resnet34
+    model = resnet34(num_classes=args.num_classes)
     model.conv1 = torch.nn.Conv2d(
         args.input_shape[-1], 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False
     )
-    model.fc = torch.nn.Linear(in_features=512, out_features=args.num_classes, bias=True)
     return model
 
 
 def build_mobilenetv2(args):
-    model = torch.hub.load('pytorch/vision:v0.9.0', 'mobilenet_v2', pretrained=False)
-    model.classifier[1] = torch.nn.Linear(
-        in_features=1280, out_features=args.num_classes, bias=True
-    )
-    return model
+    from torchvision.models.mobilenetv2 import mobilenet_v2
+    return mobilenet_v2(num_classes=args.num_classes)
 
 
 def build_shufflenetv2_w2(args):
-    import torchvision
-    model = torchvision.models.shufflenet_v2_x2_0(pretrained=False)
-    model.fc = torch.nn.Linear(in_features=2048, out_features=args.num_classes, bias=True)
-    return model
+    from torchvision.models.shufflenetv2 import shufflenet_v2_x2_0
+    return shufflenet_v2_x2_0(num_classes=args.num_classes)
 
 
 _models = {
