@@ -1,6 +1,5 @@
 package com.fedscale.android.app;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -8,6 +7,8 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -29,6 +30,7 @@ public class FLApp extends AppCompatActivity {
 
     private Button flButton;
     private Button finetuneButton;
+    private RadioGroup backendButton;
 
     private Resources res;
 
@@ -37,8 +39,8 @@ public class FLApp extends AppCompatActivity {
 
     private Client executor;
 
-    private Boolean hasModel;
     private Boolean dataInitialized;
+    private Map<String, Boolean> hasModel = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,16 +58,30 @@ public class FLApp extends AppCompatActivity {
 
         this.flButton = findViewById(R.id.flButton);
         this.finetuneButton = findViewById(R.id.finetuneButton);
+        this.backendButton = findViewById(R.id.backend);
+
+        RadioButton tfliteButton = findViewById(R.id.radio_tflite);
+        tfliteButton.setChecked(true);
 
         this.res = getResources();
 
         this.executor = new Client(this);
 
-        this.hasModel = false;
+        this.hasModel.put("model.tflite", false);
+        this.hasModel.put("model.mnn", false);
         this.dataInitialized = false;
+
+        this.backendButton.setOnCheckedChangeListener((r, id) -> {
+            if (id == R.id.radio_tflite) this.executor.UseTFLiteBackend();
+            else if (id == R.id.radio_mnn) this.executor.UseMNNBackend();
+            if (!this.hasModel.get(this.executor.GetBackend())) {
+                this.mExecuteMsg.setText(this.res.getString(R.string.no_model));
+            }
+        });
 
         this.flButton.setOnClickListener(v -> {
             if (this.flButton.getText().equals(this.res.getString(R.string.start_fl))) {
+                this.backendButton.setEnabled(false);
                 if (!this.dataInitialized) {
                     try {
                         this.executor.initExecutor();
@@ -95,13 +111,15 @@ public class FLApp extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 this.flButton.setText(this.res.getString(R.string.start_fl));
-                if (this.hasModel) {
+                if (this.hasModel.get(this.executor.GetBackend())) {
                     this.finetuneButton.setEnabled(true);
                 }
+                this.backendButton.setEnabled(true);
             }
         });
 
         this.finetuneButton.setOnClickListener(v -> {
+            this.backendButton.setEnabled(false);
             this.flButton.setEnabled(false);
             this.mThread = new HandlerThread("Fine-tune");
             this.mThread.start();
@@ -114,6 +132,7 @@ public class FLApp extends AppCompatActivity {
                 }
             });
             this.finetuneButton.setEnabled(false);
+            this.backendButton.setEnabled(true);
         });
 
     }
@@ -156,11 +175,13 @@ public class FLApp extends AppCompatActivity {
             if (newStatus.equals(Common.CLIENT_TRAIN_LOCALLY_FIN)) {
                 this.finetuneButton.setEnabled(true);
                 this.flButton.setEnabled(true);
+                this.backendButton.setEnabled(true);
             } else if (newStatus.equals(Common.SHUT_DOWN)) {
                 this.flButton.setText(this.res.getString(R.string.start_fl));
-                if (this.hasModel) {
+                if (this.hasModel.get(this.executor.GetBackend())) {
                     this.finetuneButton.setEnabled(true);
                 }
+                this.backendButton.setEnabled(true);
             }
         });
     }
@@ -179,7 +200,7 @@ public class FLApp extends AppCompatActivity {
      */
     public void onGetModel(){
         runOnUiThread(() -> this.mExecuteMsg.setText(this.res.getString(R.string.has_model)));
-        this.hasModel = true;
+        this.hasModel.put(this.executor.GetBackend(), true);
     }
 
     /**
@@ -190,7 +211,7 @@ public class FLApp extends AppCompatActivity {
             this.mExecuteMsg.setText(this.res.getString(R.string.no_model));
             this.finetuneButton.setEnabled(false);
         });
-        this.hasModel = false;
+        this.hasModel.put(this.executor.GetBackend(), false);
     }
 
     /**

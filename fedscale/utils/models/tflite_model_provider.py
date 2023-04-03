@@ -86,12 +86,60 @@ def build_resnet50_finetune(args):
     return model, base
 
 
+def build_resnet34(args):
+    from tf2cv.models.resnet import resnet34
+    model = resnet34(
+        in_channels=args.input_shape[-1], 
+        in_size=args.input_shape[:-1], 
+        classes=args.num_classes)
+    model.compile(
+        optimizer=tf.keras.optimizers.SGD(
+            learning_rate=args.learning_rate,
+            momentum=0.9,
+            weight_decay=4e-5),
+        loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True))
+    return model, None
+
+
+def build_mobilenetv2(args):
+    model = tf.keras.applications.mobilenet_v2.MobileNetV2(
+        input_shape=args.input_shape,
+        classes=args.num_classes,
+        weights=None,
+        classifier_activation=None)
+    model.compile(
+        optimizer=tf.keras.optimizers.SGD(
+            learning_rate=args.learning_rate,
+            momentum=0.9,
+            weight_decay=4e-5),
+        loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True))
+    return model, None
+
+
+def build_shufflenetv2_w2(args):
+    from tf2cv.models.shufflenetv2 import shufflenetv2_w2
+    model = shufflenetv2_w2(
+        in_channels=args.input_shape[-1],
+        in_size=args.input_shape[:-1],
+        classes=args.num_classes)
+    model.compile(
+        optimizer=tf.keras.optimizers.SGD(
+            learning_rate=args.learning_rate,
+            momentum=0.9,
+            weight_decay=4e-5),
+        loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True))
+    return model, None
+
+
 _models = {
     'linear': build_simple_linear,
     'mobilenetv3': build_mobilenetv3,
     'mobilenetv3_finetune': build_mobilenetv3_finetune,
     'resnet50': build_resnet50,
-    'resnet50_finetune': build_resnet50_finetune
+    'resnet50_finetune': build_resnet50_finetune,
+    'resnet34': build_resnet34,
+    'mobilenetv2': build_mobilenetv2,
+    'shufflenet_v2_x2_0': build_shufflenetv2_w2,
 }
 
 
@@ -115,13 +163,8 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
         bytes: TFLite model in bytes format.
         tf.Module: TFLite model in python object format.
     """
-    IMG_SIZE = max(args.input_shape)
+    IMG_HEIGHT, IMG_WIDTH, IMG_CHANNEL = args.input_shape
     NUM_CLASSES = args.num_classes
-    NUM_FEATURES = 0
-    if args.model == "mobilenetv3_finetune":
-        NUM_FEATURES = 28224
-    elif args.model == "resnet50_finetune":
-        NUM_FEATURES = 100352
 
     class TFLiteModel(tf.Module):
         """TF model class."""
@@ -135,7 +178,7 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
             self.model = model
 
         @tf.function(input_signature=[
-            tf.TensorSpec([None, IMG_SIZE, IMG_SIZE, 3], tf.float32),
+            tf.TensorSpec([None, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNEL], tf.float32),
             tf.TensorSpec([None, NUM_CLASSES], tf.float32),
         ])
         def train(self, data: tf.Tensor, label: tf.Tensor) -> dict:
@@ -158,7 +201,7 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
             return result
 
         @tf.function(input_signature=[
-            tf.TensorSpec([None, IMG_SIZE, IMG_SIZE, 3], tf.float32),
+            tf.TensorSpec([None, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNEL], tf.float32),
             tf.TensorSpec([None, NUM_CLASSES], tf.float32)
         ])
         def test(self, data, label):
@@ -185,7 +228,7 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
             }
 
         @tf.function(input_signature=[
-            tf.TensorSpec([None, IMG_SIZE, IMG_SIZE, 3], tf.float32)
+            tf.TensorSpec([None, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNEL], tf.float32)
         ])
         def infer(self, data: tf.Tensor) -> dict:
             """Invokes an inference on the given feature.
@@ -254,7 +297,7 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
             self.base = base
 
         @tf.function(input_signature=[
-            tf.TensorSpec([None, IMG_SIZE, IMG_SIZE, 3], tf.float32),
+            tf.TensorSpec([None, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNEL], tf.float32),
             tf.TensorSpec([None, NUM_CLASSES], tf.float32),
         ])
         def train(self, data: tf.Tensor, label: tf.Tensor) -> dict:
@@ -278,7 +321,7 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
             return result
 
         @tf.function(input_signature=[
-            tf.TensorSpec([None, IMG_SIZE, IMG_SIZE, 3], tf.float32),
+            tf.TensorSpec([None, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNEL], tf.float32),
             tf.TensorSpec([None, NUM_CLASSES], tf.float32)
         ])
         def test(self, data: tf.Tensor, label: tf.Tensor) -> dict:
@@ -305,7 +348,7 @@ def convert_and_save(tf_model: tf.Module, tf_base: tf.Module, args, saved_model_
             }
 
         @tf.function(input_signature=[
-            tf.TensorSpec([None, IMG_SIZE, IMG_SIZE, 3], tf.float32)
+            tf.TensorSpec([None, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNEL], tf.float32)
         ])
         def infer(self, data: tf.Tensor) -> dict:
             """Invokes an inference on the given feature.

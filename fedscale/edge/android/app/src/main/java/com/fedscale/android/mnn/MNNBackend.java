@@ -51,4 +51,9 @@ public class MNNBackend implements Backend{
                 testingDataConf,
                 testingConf);
     }
+
+    @Override
+    public String ModelName() {
+        return "model.mnn";
+    }
 }

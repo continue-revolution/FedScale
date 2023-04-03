@@ -7,10 +7,6 @@
   "executor_info": {
     "size": [32, 32, 32, 32, 32, 32, 32, 32, 32, 32]
   },
-  "model_conf": {
-    "path": "model.tflite",
-    "backend": "tflite"
-  },
   "training_data": {
     "data": "TrainSet",
     "label": "train_labels.txt"
@@ -30,8 +26,7 @@
     "momentum": 0.9,
     "channel": 3,
     "width": 32,
-    "height": 32,
-    "fine_tune": false
+    "height": 32
   },
   "testing_conf": {
     "num_classes": 10,

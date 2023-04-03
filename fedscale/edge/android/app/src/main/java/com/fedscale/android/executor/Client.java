@@ -48,7 +48,7 @@ public class Client {
     private int round = 0;
     private boolean receivedStopRequest = false;
     private Queue<ServerResponse> eventQueue = new LinkedList<>();
-    private Backend backend;
+    private Backend backend = new TFLiteBackend();
 
     private FLApp app;
 
@@ -116,10 +116,6 @@ public class Client {
         this.communicator = new ClientConnections(
                 aggregatorIP,
                 aggregatorPort);
-        final String backendName = this.config.getJSONObject("model_conf").getString("backend");
-        if (backendName.equals("tflite")) this.backend = new TFLiteBackend();
-        else if (backendName.equals("mnn")) this.backend = new MNNBackend();
-        else throw new Exception(String.format("Unsupported backend %s", backendName));
     }
 
     /**
@@ -169,13 +165,12 @@ public class Client {
      *
      * @param model The broadcast global model config.
      */
-    public void FLUpdateModel(byte[] model) throws JSONException, IOException {
+    public void FLUpdateModel(byte[] model) throws IOException {
         this.app.onWriteModel();
         this.round++;
         this.app.onChangeStatus(Common.UPDATE_MODEL);
         this.app.onChangeRound(this.round);
-        final String fileName = this.config.getJSONObject("model_conf").getString("path");
-        final String modelPath = app.getCacheDir() + "/" + fileName;
+        final String modelPath = this.app.getCacheDir() + "/" + this.backend.ModelName();
         InputStream is = new ByteArrayInputStream(model);
         Common.inputStream2File(is, modelPath);
         this.app.onGetModel();
@@ -194,7 +189,7 @@ public class Client {
                 config);
         Map<String, Object> trainResult = this.backend.MLTrain(
                 this.app.getCacheDir().toString(),
-                this.config.getJSONObject("model_conf").getString("path"),
+                this.backend.ModelName(),
                 this.config.getJSONObject("training_data"),
                 newTrainingConf);
         // TODO: It might be better to make UPLOAD_MODEL async to utilize the resource.
@@ -216,7 +211,7 @@ public class Client {
         this.config.getJSONObject("training_conf").put("fine_tune", true);
         Map<String, Object> trainResult = this.backend.MLTrain(
                 this.app.getCacheDir().toString(),
-                this.config.getJSONObject("model_conf").getString("path"),
+                this.backend.ModelName(),
                 this.config.getJSONObject("training_data"),
                 this.config.getJSONObject("training_conf"));
         this.app.onChangeStatus(Common.CLIENT_TRAIN_LOCALLY_FIN);
@@ -234,7 +229,7 @@ public class Client {
                 config);
         Map<String, Object> testResult = this.backend.MLTest(
                 app.getCacheDir().toString(),
-                this.config.getJSONObject("model_conf").getString("path"),
+                this.backend.ModelName(),
                 this.config.getJSONObject("testing_data"),
                 newTestingConf);
         Map<String, Object> testRes = new HashMap<>();
@@ -267,6 +262,18 @@ public class Client {
         this.app.onChangeStatus(Common.SHUT_DOWN);
         this.communicator.CloseServerConnection();
         this.receivedStopRequest = true;
+    }
+
+    public void UseMNNBackend() {
+        this.backend = new MNNBackend();
+    }
+
+    public void UseTFLiteBackend() {
+        this.backend = new TFLiteBackend();
+    }
+
+    public String GetBackend() {
+        return this.backend.ModelName();
     }
 
     /**

@@ -40,4 +40,10 @@ public interface Backend {
             String model,
             JSONObject testingDataConf,
             JSONObject testingConf) throws JSONException, IOException;
+
+
+    /**
+     * @return Model name string.
+     */
+    String ModelName();
 }

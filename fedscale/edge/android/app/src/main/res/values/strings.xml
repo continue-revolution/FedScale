@@ -7,4 +7,7 @@
     <string name="stop_finetune">Stop Local Fine-tune</string>
     <string name="no_model">You may not start local fine-tuning because there is no model locally. Please connect to the server first.</string>
     <string name="has_model">You may now start local fine-tuning. If the FL executor is running, you should stop it first.</string>
+    <string name="tflite">TFLite</string>
+    <string name="alibaba_mnn">Alibaba MNN</string>
+    <string name="choose_backend">Choose Backend</string>
 </resources>

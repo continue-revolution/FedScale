@@ -11,6 +11,7 @@ dependencies:
     - torch
     - tensorflow
     - torchvision
+    - tf2cv
     - transformers
     - scipy==1.4.1
     - matplotlib==3.1.3

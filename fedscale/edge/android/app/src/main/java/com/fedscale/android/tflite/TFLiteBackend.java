@@ -136,7 +136,7 @@ public class TFLiteBackend implements Backend {
         results.put("moving_loss", epochTrainLoss);
         results.put("trained_size", trainEpochs * dataCount);
         results.put("success", true);
-        byte[] newModel = Common.readFile(new FileInputStream(outputFile.getAbsolutePath())).toByteArray();;
+        byte[] newModel = Common.readFile(new FileInputStream(outputFile.getAbsolutePath())).toByteArray();
         results.put("update_weight", newModel);
         results.put("utility", currentLoss * currentLoss * dataCount);
         results.put("wall_duration", 0);
@@ -231,6 +231,11 @@ public class TFLiteBackend implements Backend {
         return results;
     }
 
+    @Override
+    public String ModelName() {
+        return "model.tflite";
+    }
+
     /**
      * Data loader for Android. TFLite does not have its native data loader.
      *
@@ -240,7 +245,7 @@ public class TFLiteBackend implements Backend {
      * @param height Height of image.
      * @param width Width of image.
      * @param channel Channel of image.
-     * @param numClasses Number of classes during training.
+     * @param numClasses Number of classes during training
      * @return (image batches, label batches), list of float arrays.
      */
     private Pair<List<float[][][][]>, List<float[][]>> dataLoader(
