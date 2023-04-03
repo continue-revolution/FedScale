@@ -14,7 +14,9 @@ script_path = "../scripts/"
 def build_simple_linear(args):
     return torch.nn.Sequential(
         torch.nn.Flatten(),
-        torch.nn.Linear(np.prod(args.input_shape), args.num_classes),
+        torch.nn.Linear(np.prod(args.input_shape), 128),
+        torch.nn.ReLU(),
+        torch.nn.Linear(128, args.num_classes),
         torch.nn.Softmax(dim=1)
     )
     
