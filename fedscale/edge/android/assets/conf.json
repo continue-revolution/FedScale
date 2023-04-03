@@ -25,15 +25,15 @@
     "weight_decay": 0.00004,
     "momentum": 0.9,
     "channel": 3,
-    "width": 32,
-    "height": 32
+    "width": 224,
+    "height": 224
   },
   "testing_conf": {
     "num_classes": 10,
     "test_bsz": 16,
     "num_workers": 2,
     "channel": 3,
-    "width": 32,
-    "height": 32
+    "width": 224,
+    "height": 224
   }
 }

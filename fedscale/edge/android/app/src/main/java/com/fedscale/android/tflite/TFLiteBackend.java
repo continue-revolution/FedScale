@@ -93,7 +93,11 @@ public class TFLiteBackend implements Backend {
             Map<String, Object> inputs = new HashMap<>();
             inputs.put("checkpoint_path", newCkpt);
             Map<String, Object> outputs = new HashMap<>();
-            interpreter.runSignature(inputs, outputs, "load");
+            try {
+                interpreter.runSignature(inputs, outputs, "load");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         for (int epoch = 0; epoch < trainEpochs; ++epoch) {
