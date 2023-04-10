@@ -14,6 +14,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.Interpreter;
+import org.tensorflow.lite.gpu.CompatibilityList;
+import org.tensorflow.lite.gpu.GpuDelegate;
 import org.tensorflow.lite.support.common.FileUtil;
 import org.tensorflow.lite.support.common.ops.NormalizeOp;
 import org.tensorflow.lite.support.image.ImageProcessor;
@@ -86,7 +88,19 @@ public class TFLiteBackend implements Backend {
         float currentLoss = 0;
 
         Interpreter.Options options = new Interpreter.Options();
-        options.setNumThreads(trainNumWorkers);
+        CompatibilityList compatList = new CompatibilityList();
+
+        if(compatList.isDelegateSupportedOnThisDevice()){
+            // if the device has a supported GPU, add the GPU delegate
+            Log.i("Device", "GPU");
+            GpuDelegate.Options delegateOptions = compatList.getBestOptionsForThisDevice();
+            GpuDelegate gpuDelegate = new GpuDelegate(delegateOptions);
+            options.addDelegate(gpuDelegate);
+        } else {
+            Log.i("Device", "CPU");
+            // if the GPU is not supported, run on 4 threads
+            options.setNumThreads(trainNumWorkers);
+        }
         Interpreter interpreter = new Interpreter(new File(directory + "/" + model), options);
 
         if (fineTune && new File(newCkpt).isFile()) {
